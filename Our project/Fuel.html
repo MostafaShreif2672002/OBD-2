@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Car Dashboard (Fuel)</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', sans-serif;
+      background-color: #333;
+      color: #fff;
+    }
+
+    .dashboard {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      height: 100vh;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .gauge {
+      position: relative;
+      background-color: #1f1f1f;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    .gauge canvas {
+      border-radius: 50%;
+      animation: scale 1s ease infinite alternate;
+    }
+
+    .label {
+      font-size: 24px;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      color: #bbb;
+    }
+
+    .value {
+      font-size: 72px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: #ff0000;
+      text-align: center;
+    }
+
+    .unit {
+      font-size: 24px;
+      font-weight: bold;
+      color: #bbb;
+      text-align: center;
+    }
+
+    .icon {
+      position: absolute;
+      top: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 100px;
+      background-image: url('car-icon.png');
+      background-size: cover;
+      z-index: 1;
+    }
+
+    .fuel-gauge {
+      position: relative;
+      width: 20px;
+      height: 200px;
+      background-color: #1f1f1f;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 2px solid #888;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    }
+
+    .fuel-gauge .indicator {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: linear-gradient(to bottom, green 0%, yellow 50%, red 100%);
+    }
+
+    .fuel-level {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 18px;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    .warning-light {
+      position: fixed;
+      bottom: 15px;
+      transform: translateX(-50%);
+      display: none;
+    }
+
+    .warning-light img {
+      width: 49px;
+      height: 50px;
+      border-radius: 60%;
+      background-color: #0e0d0d;
+      padding: 8px;
+      filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.5));
+      animation: pulse 0.7s infinite alternate;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      100% {
+        transform: scale(1.1);
+      }
+    }
+
+    @keyframes scale {
+      from {
+        transform: scale(1);
+      }
+      to {
+        transform: scale(1.05);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 style="text-align: center; margin-top: 15px;">Fuel Gauge</h1>
+  </header>
+  
+  <!-- Warning lights for various alerts -->
+  <div class="warning-light" id="fuelWarningLight" style="left: 50%;">
+    <img src="low-fuel-tank.jpg" alt="Low Fuel Warning">
+  </div>
+  <div class="warning-light" id="temperatureWarningLight" style="left: 40%;">
+    <img src="temp2.webp" alt="Engine Warning Temperature">
+  </div>
+  <div class="warning-light" id="dtcWarningLight" style="left: 60%;">
+    <img src="check-engine-light-icon-1616189100.jpg" alt="Engine Diagnostic Warning">
+  </div>
+
+  <div class="dashboard">
+    <div class="gauge" style="bottom: 50px;">
+      <canvas id="fuelGaugeCanvas" width="200" height="200"></canvas>
+      <div class="label">Fuel</div>
+      <div class="fuel-level" id="fuelValueCanvas">100%</div>
+    </div>
+
+    <div class="gauge" style="bottom: 50px;">
+      <div class="fuel-gauge" id="fuelGaugeDiv">
+        <div class="indicator" id="fuelIndicatorDiv"></div>
+      </div>
+      <div class="label">Fuel</div>
+      <div class="fuel-level" id="fuelValueDiv">100%</div>
+    </div>
+    <div class="icon"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCzPMURR0NVfjP2ge9Nao1d0q_a-7PCkQo",
+        authDomain: "car-dashboard-234ad.firebaseapp.com",
+        projectId: "car-dashboard-234ad",
+        storageBucket: "car-dashboard-234ad.appspot.com",
+        messagingSenderId: "993885057582",
+        appId: "1:993885057582:web:573d22b3866983212165bf",
+        measurementId: "G-PXDK8LMVQ3"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Canvas Gauge Variables
+    const canvas = document.getElementById('fuelGaugeCanvas');
+    const ctx = canvas.getContext('2d');
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = 100;
+
+    // Div Gauge Variables
+    const fuelIndicatorDiv = document.getElementById('fuelIndicatorDiv');
+    const fuelValueDiv = document.getElementById('fuelValueDiv');
+
+    // Function to draw canvas gauge
+    function drawCanvasGauge(fuelLevel) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw outer circle
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+      ctx.fillStyle = '#ddd';
+      ctx.fill();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#333';
+      ctx.stroke();
+
+      // Draw inner circle
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius - 10, 0, 2 * Math.PI);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+
+      // Draw ticks
+      ctx.lineWidth = 2;
+      for (let i = 0; i <= 10; i++) {
+        const angle = (i / 10) * Math.PI; // Adjust for half circle
+        const startX = centerX + (radius - 10) * Math.cos(angle);
+        const startY = centerY - (radius - 10) * Math.sin(angle);
+        const endX = centerX + radius * Math.cos(angle);
+        const endY = centerY - radius * Math.sin(angle);
+
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(endX, endY);
+        ctx.strokeStyle = '#333';
+        ctx.stroke();
+      }
+
+      // Draw needle
+      const needleAngle = (1 - fuelLevel) * Math.PI; // Invert the fuel level
+      const needleX = centerX + (radius - 20) * Math.cos(needleAngle);
+      const needleY = centerY - (radius - 20) * Math.sin(needleAngle);
+
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(needleX, needleY);
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#ff0000';
+      ctx.stroke();
+
+      // Draw fuel level text
+      ctx.font = '20px Arial';
+      ctx.fillStyle = '#333';
+      ctx.fillText('E', centerX - radius + 20, centerY + 10);
+      ctx.fillText('F', centerX + radius - 30, centerY + 10);
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      // Firebase listener for temperature
+      const temperatureRef = ref(db, 'carReadings/temperature');
+      onValue(temperatureRef, (snapshot) => {
+        const temperatureValue = snapshot.val();
+        if (temperatureValue !== null) {
+          localStorage.setItem('lastTemperature', temperatureValue);
+          updateDashboardWarnings(temperatureValue, null, null);
+        }
+      });
+
+      // Firebase listener for fuel
+      const fuelRefCanvas = ref(db, 'carReadings/fuel');
+      onValue(fuelRefCanvas, (snapshot) => {
+        const fuelValue = snapshot.val();
+        if (fuelValue !== null) {
+          setFuelLevelCanvas(fuelValue);
+          updateDashboardCanvas(fuelValue);
+        }
+      });
+
+      // Firebase listener for DTC
+      const dtcRef  = ref(db, 'carReadings/dtc');
+      onValue(dtcRef, (snapshot) => {
+        const dtcValue = snapshot.val();
+        if (dtcValue !== null) {
+          updateDashboardWarnings(null, null, dtcValue);
+        }
+      });
+
+      // Function to update dashboard warning lights
+      function updateDashboardWarnings(temperature, fuel, dtc) {
+        // Temperature warning
+        const storedTemperature = localStorage.getItem('lastTemperature');
+        if (storedTemperature !== null && parseInt(storedTemperature) >= 100) {
+          document.getElementById("temperatureWarningLight").style.display = "block";
+        } else {
+          document.getElementById("temperatureWarningLight").style.display = "none";
+        }
+
+        // Fuel warning
+        if (fuel < 15) {
+          document.getElementById("fuelWarningLight").style.display = "block";
+        } else {
+          document.getElementById("fuelWarningLight").style.display = "none";
+        }
+
+        // DTC warning
+        if (dtc !== "No data found") {
+          document.getElementById("dtcWarningLight").style.display = "block";
+        } else {
+          document.getElementById("dtcWarningLight").style.display = "none";
+        }
+      }
+
+      // Function to update canvas gauge
+      function setFuelLevelCanvas(level) {
+        document.getElementById("fuelValueCanvas").innerText = `${level}%`;
+        drawCanvasGauge(level / 100);  // Convert to decimal for drawing
+      }
+
+      // Function to update canvas gauge warning lights
+      function updateDashboardCanvas(fuel) {
+        if (fuel < 15) {
+          document.getElementById("fuelWarningLight").style.display = "block";
+        } else {
+          document.getElementById("fuelWarningLight").style.display = "none";
+        }
+        // Additional conditions for temperature and dtc warnings can be added here
+      }
+
+      // Initial draw of the canvas gauge
+      drawCanvasGauge(1);  // Default full tank
+
+      // Firebase listener for div gauge
+      const fuelRefDiv = ref(db, 'carReadings/fuel');
+      onValue(fuelRefDiv, (snapshot) => {
+        const fuelValue = snapshot.val();
+        if (fuelValue !== null) {
+          setFuelLevelDiv(fuelValue);
+          updateDashboardDiv(fuelValue);
+        }
+      });
+
+      // Function to update div gauge
+      function setFuelLevelDiv(level) {
+        fuelValueDiv.innerText = `${level}%`;
+        fuelIndicatorDiv.style.height = `${level}%`;
+      }
+
+      // Function to update div gauge warning lights
+      function updateDashboardDiv(fuel) {
+        if (fuel < 15) {
+          document.getElementById("fuelWarningLight").style.display = "block";
+        } else {
+          document.getElementById("fuelWarningLight").style.display = "none";
+        }
+        // Additional conditions for temperature and dtc warnings can be added here
+      }
+
+      // Initial setup of the div gauge
+      setFuelLevelDiv(100);  // Default full tank
+    });
+  </script>
+</body>
+</html>
+

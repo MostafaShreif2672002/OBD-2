@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Car Dashboard (Tempreture)</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', sans-serif;
+      background-color: #333;
+      color: #fff;
+    }
+
+    .dashboard {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      height: 100vh;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .gauge {
+      position: relative;
+      background-color: #1f1f1f;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    .gauge canvas {
+      border-radius: 50%;
+      animation: scale 1s ease infinite alternate;
+    }
+
+    .label {
+      font-size: 24px;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      color: #bbb;
+    }
+
+    .value {
+      font-size: 72px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: #ff0000;
+      text-align: center;
+    }
+
+    .unit {
+      font-size: 24px;
+      font-weight: bold;
+      color: #bbb;
+      text-align: center;
+    }
+
+    .icon {
+      position: absolute;
+      top: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 100px;
+      background-image: url('car-icon.png');
+      background-size: cover;
+      z-index: 1;
+    }
+
+    
+    .temperature-gauge {
+      width: 350px;
+      height: 350px;
+      position: relative;
+      border-radius: 50%;
+      background-color: #f9f9f9;
+      border: 5px solid #ccc;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+      overflow: hidden; /* Added overflow for clipping */
+    }
+
+    .temperature-value {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 36px;
+      font-weight: bold;
+      color: #0e0d0d;
+    }
+
+    .temperature-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 0; /* Initially set height to 0 */
+      background-color: transparent; /* Initially set background color to transparent */
+      transition: height 1s, background-color 1s; /* Add transition for smooth animation */
+    }
+
+    .fuel-warning-light img {
+      width: 49px; /* Adjust the size as needed */
+      height: 50px; /* Keep the icon square */
+      border-radius: 60%; /* Makes the icon round */
+      background-color: #0e0d0d; /* Light red background */
+      padding: 8px;
+      filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.5)); /* Add drop shadow */
+      animation: pulse 0.7s infinite alternate; /* Apply animation */
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      100% {
+        transform: scale(1.1);
+      }
+    }
+
+    @keyframes scale {
+      from {
+        transform: scale(1);
+      }
+      to {
+        transform: scale(1.05);
+      }
+    }
+    .temperature-warning-light img {
+      width: 49px; /* Adjust the size as needed */
+      height: 50px; /* Keep the icon square */
+      border-radius: 60%; /* Makes the icon round */
+      background-color: #0e0d0d; /* Light red background */
+      padding: 8px;
+      filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.5)); /* Add drop shadow */
+      animation: pulse 0.7s infinite alternate; /* Apply animation */
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      100% {
+        transform: scale(1.1);
+      }
+    }
+
+    @keyframes scale {
+      from {
+        transform: scale(1);
+      }
+      to {
+        transform: scale(1.04);
+      }
+    }
+
+    .dtc-warning-light img {
+      width: 55px; /* Adjust the size as needed */
+      height: 55px; /* Keep the icon square */
+      border-radius: 60%; /* Makes the icon round */
+      background-color: #0e0d0d; /* Light red background */
+      padding: 8px;
+      filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.5)); /* Add drop shadow */
+      animation: pulse 0.7s infinite alternate; /* Apply animation */
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      100% {
+        transform: scale(1.1);
+      }
+    }
+
+    @keyframes scale {
+      from {
+        transform: scale(1);
+      }
+      to {
+        transform: scale(1.04);
+      }
+    }
+    
+    
+  </style>
+</head>
+<body>
+  <header>
+    <h1 style="text-align: center; margin-top: 15px;left: 40%;">Tempreture</h1>
+  </header>
+  <div class="fuel-warning-light" id="fuelWarningLight" style="position: fixed; bottom: 50px; left: 40%; transform: translateX(-50%); display: none;">
+    <img src="low-fuel-tank.jpg" alt="Low Fuel Warning">
+  </div>
+  <div class="temperature-warning-light" id="temperatureWarningLight" style="position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%); display: none;">
+    <img src="temp2.webp" alt="Engine Warning Temperature">
+  </div>
+  <div class="dtc-warning-light" id="dtcWarningLight" style="position: fixed; bottom: 50px; left: 60%; transform: translateX(-50%); display: none;">
+    <img src="check-engine-light-icon-1616189100.jpg" alt="Engine Warning Temperature">
+  </div>
+  <div class="dashboard">
+    
+    <div class="gauge" style="width: 350px;bottom: 100px;">
+      <div class="temperature-gauge">
+        <div class="temperature-value" id="temperatureValue">0°C</div>
+        <div class="temperature-bar" id="temperatureBar"></div> <!-- Temperature bar added -->
+      </div>
+    </div>
+    <div class="icon"></div>
+  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+    const firebaseConfig = {
+        apiKey: "AIzaSyCzPMURR0NVfjP2ge9Nao1d0q_a-7PCkQo",
+        authDomain: "car-dashboard-234ad.firebaseapp.com",
+        projectId: "car-dashboard-234ad",
+        storageBucket: "car-dashboard-234ad.appspot.com",
+        messagingSenderId: "993885057582",
+        appId: "1:993885057582:web:573d22b3866983212165bf",
+        measurementId: "G-PXDK8LMVQ3"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    document.addEventListener("DOMContentLoaded", function () {
+      
+      const temperatureBar = document.getElementById("temperatureBar");
+      onValue(ref(db, 'carReadings'), snapshot => {
+        const data = snapshot.val();
+        const {  fuel, temperature,dtc} = data;
+        updateDashboard(fuel, temperature,dtc);
+      });   
+
+function updateDashboard(fuel, temperature,dtc) {
+  
+  document.getElementById("temperatureValue").innerText = temperature + "°C";
+  // Round the battery voltage to two decimal places
+  
+  temperatureBar.style.height = `${temperature}%`;
+  temperatureBar.style.backgroundColor = `rgba(242, 168, 168, ${temperature / 116})`; // (Change background color opacity)
+ 
+  // Show/hide temperature warning light
+  if (temperature >= 100) {
+    document.getElementById("temperatureWarningLight").style.display = "block";
+  } else {
+    document.getElementById("temperatureWarningLight").style.display = "none";
+  }
+  if (fuel < 15) {
+    document.getElementById("fuelWarningLight").style.display = "block";
+  } else {
+            document.getElementById("fuelWarningLight").style.display = "none";
+  }
+  if (dtc != "No data found") {
+    document.getElementById("dtcWarningLight").style.display = "block";
+  } else {
+            document.getElementById("dtcWarningLight").style.display = "none";
+  }
+  
+}
+
+      
+      
+    });
+  </script>
+</body>
+</html>

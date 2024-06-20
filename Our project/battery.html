@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Car Dashboard (Battery Voltage)</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', sans-serif;
+      background-color: #333;
+      color: #fff;
+    }
+
+    .dashboard {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      height: 100vh;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .gauge {
+      position: relative;
+      background-color: #1f1f1f;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    .gauge canvas {
+      border-radius: 50%;
+      animation: scale 1s ease infinite alternate;
+    }
+
+    .label {
+      font-size: 24px;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      color: #bbb;
+    }
+
+    .value {
+      font-size: 72px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: #ff0000;
+      text-align: center;
+    }
+
+    .unit {
+      font-size: 24px;
+      font-weight: bold;
+      color: #bbb;
+      text-align: center;
+    }
+
+    .icon {
+      position: absolute;
+      top: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 100px;
+      background-image: url('car-icon.png');
+      background-size: cover;
+      z-index: 1;
+    }
+
+    .fuel-warning-light img, .temperature-warning-light img, .dtc-warning-light img {
+      width: 49px;
+      height: 50px;
+      border-radius: 60%;
+      background-color: #0e0d0d;
+      padding: 8px;
+      filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.5));
+      animation: pulse 0.7s infinite alternate;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      100% {
+        transform: scale(1.1);
+      }
+    }
+
+    @keyframes scale {
+      from {
+        transform: scale(1);
+      }
+      to {
+        transform: scale(1.05);
+      }
+    }
+
+    .battery-container {
+      position: relative;
+      width: 100px; /* Moderately increased width */
+      height: 250px; /* Moderately increased height */
+      background-color: #1f1f1f;
+      border-radius: 20px;
+      padding: 10px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    .battery-text {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #bbb;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 style="text-align: center; margin-top: 15px;">Battery Voltage 🔋</h1>
+  </header>
+  <div class="fuel-warning-light" id="fuelWarningLight" style="position: fixed; bottom: 50px; left: 40%; transform: translateX(-50%); display: none;">
+    <img src="low-fuel-tank.jpg" alt="Low Fuel Warning">
+  </div>
+  <div class="temperature-warning-light" id="temperatureWarningLight" style="position: fixed; bottom: 50px; left: 60%; transform: translateX(-50%); display: none;">
+    <img src="temp2.webp" alt="Engine Warning Temperature">
+  </div>
+  <div class="dtc-warning-light" id="dtcWarningLight" style="position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%); display: none;">
+    <img src="check-engine-light-icon-1616189100.jpg" alt="Engine Warning Temperature">
+  </div>
+
+  <div class="dashboard">
+    <div class="battery-container" style="bottom: 100px;">
+      <canvas id="batteryCanvas" width="100" height="200"></canvas> <!-- Adjusted dimensions -->
+      <div class="battery-indicator" id="batteryIndicator"></div>
+      <div class="battery-text" id="batteryText">Battery Voltage Level</div>
+    </div>
+    <div class="icon"></div>
+  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+    const firebaseConfig = {
+        apiKey: "AIzaSyCzPMURR0NVfjP2ge9Nao1d0q_a-7PCkQo",
+        authDomain: "car-dashboard-234ad.firebaseapp.com",
+        projectId: "car-dashboard-234ad",
+        storageBucket: "car-dashboard-234ad.appspot.com",
+        messagingSenderId: "993885057582",
+        appId: "1:993885057582:web:573d22b3866983212165bf",
+        measurementId: "G-PXDK8LMVQ3"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    document.addEventListener("DOMContentLoaded", function () {
+      
+      const batteryCanvas = document.getElementById("batteryCanvas");
+      const batteryIndicator = document.getElementById("batteryIndicator").style;
+      const batteryText = document.getElementById("batteryText");
+      const ctx3 = batteryCanvas.getContext("2d");
+      onValue(ref(db, 'carReadings'), snapshot => {
+        const data = snapshot.val();
+        const { fuel, temperature, battery_voltage ,dtc} = data;
+        updateDashboard(fuel, temperature, battery_voltage, dtc);
+      });
+
+      function updateDashboard(fuel, temperature, battery_voltage, dtc) {
+        const roundedVoltage = battery_voltage.toFixed(2);
+        document.getElementById("batteryText").innerText = `${roundedVoltage}V`;
+        drawBattery(ctx3, battery_voltage);
+
+        document.getElementById("temperatureWarningLight").style.display = temperature >= 100 ? "block" : "none";
+        document.getElementById("fuelWarningLight").style.display = fuel < 15 ? "block" : "none";
+        document.getElementById("dtcWarningLight").style.display = dtc != "No data found" ? "block" : "none";
+      }
+
+      function drawBattery(ctx, voltage) {
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        const batteryLevel = mapVoltageToLevel(voltage);
+        const batteryHeight = ctx.canvas.height * batteryLevel;
+
+        ctx.beginPath();
+        ctx.rect(5, 5, ctx.canvas.width - 10, ctx.canvas.height - 10);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#888';
+        ctx.stroke();
+        ctx.closePath();
+
+        ctx.fillStyle = getBatteryColor(batteryLevel);
+        ctx.fillRect(10, ctx.canvas.height - batteryHeight - 5, ctx.canvas.width - 20, batteryHeight);
+
+        const lightningX = ctx.canvas.width / 2;
+        const lightningY = ctx.canvas.height / 2;
+
+        ctx.beginPath();
+        ctx.moveTo(lightningX - 5, lightningY - 15);
+        ctx.lineTo(lightningX + 5, lightningY);
+        ctx.lineTo(lightningX - 5, lightningY);
+        ctx.lineTo(lightningX, lightningY + 15);
+        ctx.lineTo(lightningX - 10, lightningY);
+        ctx.lineTo(lightningX - 5, lightningY);
+        ctx.lineTo(lightningX - 15, lightningY - 15);
+        ctx.closePath();
+        ctx.fillStyle = 'blue';
+        ctx.fill();
+
+        ctx.fillStyle = '#888';
+        ctx.fillRect(30, 1, 40, 6);
+      }
+
+      function mapVoltageToLevel(voltage) {
+        if (voltage < 10) {
+          return 0.3;
+        } else if (voltage >= 10 && voltage <= 12) {
+          return 0.6;
+        } else {
+          return 0.9;
+        }
+      }
+
+      function getBatteryColor(level) {
+        if (level < 0.4) {
+          return 'red';
+        } else if (level < 0.7) {
+          return 'yellow';
+        } else {
+          return 'green';
+        }
+      }
+    });
+  </script>
+</body>
+</html>

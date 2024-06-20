@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Car Dashboard (RPM)</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', sans-serif;
+      background-color: #333;
+      color: #fff;
+    }
+
+    .dashboard {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      height: 100vh;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .gauge {
+      position: relative;
+      background-color: #1f1f1f;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    .gauge canvas {
+      border-radius: 50%;
+      animation: scale 1s ease infinite alternate;
+    }
+
+    .label {
+      font-size: 24px;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      color: #bbb;
+    }
+
+    .value {
+      font-size: 72px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: #ff0000;
+      text-align: center;
+    }
+
+    .unit {
+      font-size: 24px;
+      font-weight: bold;
+      color: #bbb;
+      text-align: center;
+    }
+
+    .icon {
+      position: absolute;
+      top: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 100px;
+      background-image: url('car-icon.png');
+      background-size: cover;
+      z-index: 1;
+    }
+
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      100% {
+        transform: scale(1.1);
+      }
+    }
+
+    @keyframes scale {
+      from {
+        transform: scale(1);
+      }
+      to {
+        transform: scale(1.05);
+      }
+      
+
+
+    }
+
+    .dtc-warning-light img {
+      width: 55px; /* Adjust the size as needed */
+      height: 55px; /* Keep the icon square */
+      border-radius: 60%; /* Makes the icon round */
+      background-color: #0e0d0d; /* Light red background */
+      padding: 8px;
+      filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.5)); /* Add drop shadow */
+      animation: pulse 0.7s infinite alternate; /* Apply animation */
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      100% {
+        transform: scale(1.1);
+      }
+    }
+
+    @keyframes scale {
+      from {
+        transform: scale(1);
+      }
+      to {
+        transform: scale(1.04);
+      }
+    }
+
+    .fuel-warning-light img {
+      width: 49px; /* Adjust the size as needed */
+      height: 50px; /* Keep the icon square */
+      border-radius: 60%; /* Makes the icon round */
+      background-color: #0e0d0d; /* Light red background */
+      padding: 8px;
+      filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.5)); /* Add drop shadow */
+      animation: pulse 0.7s infinite alternate; /* Apply animation */
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      100% {
+        transform: scale(1.1);
+      }
+    }
+
+    @keyframes scale {
+      from {
+        transform: scale(1);
+      }
+      to {
+        transform: scale(1.05);
+      }
+    }
+
+    .temperature-warning-light img {
+      width: 49px; /* Adjust the size as needed */
+      height: 50px; /* Keep the icon square */
+      border-radius: 60%; /* Makes the icon round */
+      background-color: #0e0d0d; /* Light red background */
+      padding: 8px;
+      filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.5)); /* Add drop shadow */
+      animation: pulse 0.7s infinite alternate; /* Apply animation */
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      100% {
+        transform: scale(1.1);
+      }
+    }
+
+    @keyframes scale {
+      from {
+        transform: scale(1);
+      }
+      to {
+        transform: scale(1.04);
+      }
+    }
+    
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1 style="text-align: center; margin-top: 15px;left: 40%;">RPM</h1>
+  </header>
+  <div class="fuel-warning-light" id="fuelWarningLight" style="position: fixed; bottom: 15px; left: 40%; transform: translateX(-50%); display: none;">
+    <img src="low-fuel-tank.jpg" alt="Low Fuel Warning">
+  </div>
+  <div class="temperature-warning-light" id="temperatureWarningLight" style="position: fixed; bottom: 15px; left: 60%; transform: translateX(-50%); display: none;">
+    <img src="temp2.webp" alt="Engine Warning Temperature">
+  </div>
+  <div class="dtc-warning-light" id="dtcWarningLight" style="position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); display: none;">
+    <img src="check-engine-light-icon-1616189100.jpg" alt="Engine Warning Temperature">
+  </div>
+  <div class="dashboard">
+    <div class="gauge" style="width: 300px;bottom: 100px;">
+      <canvas id="rpmMeterCanvas" width="300" height="300"></canvas>
+      <div class="label">RPM</div>
+      <div class="value" id="rpmValue">0</div>
+      <div class="unit">x1000</div>
+    </div>
+    <!-- Removed speedometer, fuel gauge, temperature gauge, and battery voltage sections -->
+    <div class="icon"></div>
+  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+    const firebaseConfig = {
+        apiKey: "AIzaSyCzPMURR0NVfjP2ge9Nao1d0q_a-7PCkQo",
+        authDomain: "car-dashboard-234ad.firebaseapp.com",
+        projectId: "car-dashboard-234ad",
+        storageBucket: "car-dashboard-234ad.appspot.com",
+        messagingSenderId: "993885057582",
+        appId: "1:993885057582:web:573d22b3866983212165bf",
+        measurementId: "G-PXDK8LMVQ3"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    document.addEventListener("DOMContentLoaded", function () {
+      const rpmCanvas = document.getElementById("rpmMeterCanvas");
+      const ctx2 = rpmCanvas.getContext("2d");
+      onValue(ref(db, 'carReadings'), snapshot => {
+        const data = snapshot.val();
+        const { rpm,temperature,fuel,dtc } = data;
+        updateDashboard(rpm,temperature,fuel,dtc);
+      });   
+
+      function updateDashboard(rpm,temperature,fuel,dtc) {
+        document.getElementById("rpmValue").innerText = rpm;
+        drawMeter(ctx2, 150, 150, 150, 0, 8, 1, rpm);
+        if (temperature >= 100) {
+    document.getElementById("temperatureWarningLight").style.display = "block";
+  } else {
+    document.getElementById("temperatureWarningLight").style.display = "none";
+  }
+  if (fuel < 15) {
+    document.getElementById("fuelWarningLight").style.display = "block";
+  } else {
+            document.getElementById("fuelWarningLight").style.display = "none";
+  }
+  if (dtc != "No data found") {
+    document.getElementById("dtcWarningLight").style.display = "block";
+  } else {
+            document.getElementById("dtcWarningLight").style.display = "none";
+  }
+      }
+      function drawMeter(ctx, x, y, radius, minVal, maxVal, step, value) {
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+  // Draw outer circle with gradient
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, 2 * Math.PI);
+  const gradient = ctx.createRadialGradient(x, y, radius * 0.8, x, y, radius * 1.2);
+  gradient.addColorStop(0, '#333');
+  gradient.addColorStop(1, '#000');
+  ctx.fillStyle = gradient;
+  ctx.fill();
+  ctx.closePath();
+
+  // Draw inner scale markings
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 4;
+  for (let i = minVal; i <= maxVal; i += step) {
+    const angle = ((i - minVal) / (maxVal - minVal)) * Math.PI * 1.5 - Math.PI * 0.75;
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    const startX = x + cos * (radius - 20);
+    const startY = y + sin * (radius - 20);
+    const endX = x + cos * (radius - 40);
+    const endY = y + sin * (radius - 40);
+
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+    ctx.closePath();
+  }
+
+  // Draw numbers with dynamic lighting
+  ctx.font = 'bold 20px Arial';
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+  ctx.textAlign = 'center';
+  for (let i = minVal; i <= maxVal; i += step) {
+    const angle = ((i - minVal) / (maxVal - minVal)) * Math.PI * 1.5 - Math.PI * 0.75;
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    const textX = x + cos * (radius - 60);
+    const textY = y + sin * (radius - 60);
+    ctx.fillText(i.toString(), textX, textY);
+  }
+
+  // Draw needle
+  const angle = ((value - minVal) / (maxVal - minVal)) * Math.PI * 1.5 - Math.PI * 0.75;
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  const startX = x - cos * 20;
+  const startY = y - sin * 20;
+  const endX = x + cos * (radius - 60);
+  const endY = y + sin * (radius - 60);
+
+  ctx.beginPath();
+  ctx.moveTo(startX, startY);
+  ctx.lineTo(endX, endY);
+  ctx.strokeStyle = '#ff0000';
+  ctx.lineWidth = 5;
+  ctx.stroke();
+  ctx.closePath();
+}
+
+
+      
+      }
+    );
+  </script>
+</body>
+</html>

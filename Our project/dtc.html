@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Dashboard DTC Reader</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin: 85px 0 40px;
+            cursor: pointer;
+            transition: font-size 0.3s ease, margin-bottom 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        h1:hover {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 40%;
+            margin: 20px auto;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            display: none; /* Initially hide the table */
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 20px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        th {
+            background-color: #6370f5;
+            color: white;
+        }
+        button {
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #4ca1af;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #326873;
+        }
+        #copyright-section {
+            width: 100%;
+            background: linear-gradient(to right, #0b78e3, #4ca1af);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            
+        }
+    </style>
+</head>
+<body>
+    <h1 id="carTitle">DTC (Diagnostic Trouble Codes)</h1>
+    <table id="data-table">
+        <thead>
+            <tr>
+                <th>Error Codes</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <button id="requestButton">Request</button>
+    <button id="clearButton">Clear</button>
+    <button id="resetButton">Reset</button>
+    <div id="copyright-section">
+        <p>&copy; 2024, All rights reserved.</p>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCzPMURR0NVfjP2ge9Nao1d0q_a-7PCkQo",
+            authDomain: "car-dashboard-234ad.firebaseapp.com",
+            databaseURL: "https://car-dashboard-234ad-default-rtdb.firebaseio.com",
+            projectId: "car-dashboard-234ad",
+            storageBucket: "car-dashboard-234ad.appspot.com",
+            messagingSenderId: "993885057582",
+            appId: "1:993885057582:web:573d22b3866983212165bf",
+            measurementId: "G-PXDK8LMVQ3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        const dataTable = document.getElementById('data-table').getElementsByTagName('tbody')[0];
+        const requestButton = document.getElementById('requestButton');
+        const clearButton = document.getElementById('clearButton');
+        const resetButton = document.getElementById('resetButton');
+
+        requestButton.addEventListener('click', () => {
+            document.getElementById('data-table').style.display = 'table';
+            onValue(ref(database, 'carReadings/dtc'), (snapshot) => {
+                dataTable.innerHTML = ''; // Clear previous entries
+                const dtcs = snapshot.val().split(',');
+                dtcs.forEach(dtc => {
+                    const row = dataTable.insertRow();
+                    const cell = row.insertCell();
+                    cell.textContent = dtc;
+                });
+            });
+            
+            set(ref(database, 'request'), { reading: true });
+        });
+
+        clearButton.addEventListener('click', () => {
+            set(ref(database, 'carReadings/dtc'), "No data found");
+        });
+
+        resetButton.addEventListener('click', () => {
+            dataTable.innerHTML = '';
+            /*document.getElementById('data-table').style.display = 'none';*/ /*if I need to hide the table*/
+            set(ref(database, 'carReadings/dtc'), "No data found");
+            set(ref(database, 'reset'), { reading: true });
+        });
+    </script>
+    <script src="https://cdn.botpress.cloud/webchat/v1/inject.js"></script>
+    <script src="https://mediafiles.botpress.cloud/57a8ac3d-0729-4904-8e94-e2c10fe6f1b3/webchat/config.js" defer></script>
+    
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Car Location</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        /* Set the size of the map div */
+        #map {
+            height: 90%;
+            width: 100%;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        #description {
+            padding: 20px;
+            text-align: center;
+            font-size: 1em;
+            background: #f9f9f9;
+            border-top: 1px solid #ddd;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+        }
+
+        #description .location {
+            font-weight: bold;
+            color: #140452;
+            display: block;
+        }
+
+        #description .coordinates {
+            font-size: 0.9em;
+            color: #666;
+            display: block;
+        }
+
+        #description .label {
+            font-weight: bold;
+            color: #555;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="description">
+        <span class="label">Location:</span>
+        <span class="location">Loading location...</span>
+        <span class="coordinates"></span>
+    </div>
+
+    <!-- Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCzPMURR0NVfjP2ge9Nao1d0q_a-7PCkQo",
+            authDomain: "car-dashboard-234ad.firebaseapp.com",
+            projectId: "car-dashboard-234ad",
+            storageBucket: "car-dashboard-234ad.appspot.com",
+            messagingSenderId: "993885057582",
+            appId: "1:993885057582:web:573d22b3866983212165bf",
+            measurementId: "G-PXDK8LMVQ3"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Function to initialize the map
+        function initMap() {
+            // Default location (initially center of the map)
+            const defaultLocation = [30.363738, 29.575857];
+
+            // Create a map centered at the default location
+            const map = L.map('map').setView(defaultLocation, 15);
+
+            // Add OpenStreetMap tiles with a custom style
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            // Create a marker at the default location
+            const marker = L.marker(defaultLocation).addTo(map);
+
+            // Function to perform reverse geocoding
+            async function reverseGeocode(lat, lon) {
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                const data = await response.json();
+                return data.display_name || 'Location not found';
+            }
+
+            // Reference to the GPS data in Firebase
+            const gpsRef = ref(database, 'GPS');
+
+            // Listen for changes to the GPS data
+            onValue(gpsRef, async (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    const newPosition = [data.LAT, data.LONG];
+                    // Update the marker's position
+                    marker.setLatLng(newPosition);
+                    // Center the map at the new position
+                    map.setView(newPosition, 15);
+                    // Perform reverse geocoding to get the location description
+                    const locationDescription = await reverseGeocode(data.LAT, data.LONG);
+                    // Update the description with the new address and coordinates
+                    document.querySelector('#description .location').textContent = locationDescription;
+                    document.querySelector('#description .coordinates').textContent = `(LAT: ${data.LAT}, LONG: ${data.LONG})`;
+                } else {
+                    document.querySelector('#description .location').textContent = 'Unable to retrieve location data.';
+                    document.querySelector('#description .coordinates').textContent = '';
+                }
+            }, (error) => {
+                console.error('Error fetching location data:', error);
+                document.querySelector('#description .location').textContent = 'Error fetching location data.';
+                document.querySelector('#description .coordinates').textContent = '';
+            });
+        }
+
+        // Initialize the map
+        document.addEventListener('DOMContentLoaded', (event) => {
+            initMap();
+        });
+    </script>
+
+    <!-- Leaflet.js -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</body>
+</html>

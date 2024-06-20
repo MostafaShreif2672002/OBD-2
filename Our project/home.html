@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OBD2 Website</title>
+    <style>
+        /* Global Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: #f0f0f0;
+        }
+
+        /* Navigation Bar Styles */
+        .nav-bar {
+            background: rgba(23, 34, 44, 0.8);
+            padding: 1em;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-bar ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .nav-bar li {
+            position: relative;
+            margin: 0 20px;
+        }
+
+        .nav-bar a, .nav-bar button {
+            color: #ecf0f1;
+            text-decoration: none;
+            padding: 10px 20px;
+            display: block;
+            transition: background 0.3s ease, color 0.3s ease;
+            border: none;
+            background: none;
+            font: inherit;
+            cursor: pointer;
+        }
+
+        .nav-bar a:hover, .nav-bar button:hover {
+            background-color: rgba(52, 152, 219, 0.8);
+            color: #fff;
+            border-radius: 5px;
+        }
+
+        .nav-bar ul ul {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: rgba(52, 73, 94, 0.9);
+            padding: 0.5em;
+            border-radius: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-bar li:hover > ul {
+            display: block;
+        }
+
+        /* Hero Section Styles */
+        .hero-section {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            padding: 6em 1em 3em;
+            background: linear-gradient(to bottom, #2c3e50, #4ca1af);
+            margin-top: 60px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background 0.5s ease;
+        }
+
+        .image-container {
+            flex-basis: 40%;
+            margin: 20px;
+        }
+
+        .obd2-image {
+            width: 100%;
+            height: auto;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .obd2-image:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .text-container {
+            flex-basis: 50%;
+            margin: 20px;
+            animation: fadeIn 2s ease, slideIn 1s ease;
+        }
+
+        .text-container h2 {
+            font-size: 30px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px #000;
+        }
+
+        .obd2-text {
+            font-size: 20px;
+            color: whitesmoke;
+            text-shadow: 1px 1px 2px #000;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Footer Styles */
+        footer {
+            background: rgba(23, 34, 44, 0.8);
+            color: #ecf0f1;
+            text-align: center;
+            padding: 1em 0;
+            box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Button Styles */
+        #generate-pdf {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background: rgba(23, 34, 44, 0.8);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #generate-pdf:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="nav-bar">
+        <ul>
+            <li><a href="#">Car Dashboard</a>
+                <ul>
+                    <li><a href="speed.html">Speed</a></li>
+                    <li><a href="rpm.html">RPM</a></li>
+                    <li><a href="Fuel.html">Fuel</a></li>
+                    <li><a href="temperature.html">Temperature</a></li>
+                    <li><a href="battery.html">Battery Voltage</a></li>
+                </ul>
+            </li>
+            <li><a href="dtc.html">DTC Error Codes</a></li>
+            <li><a href="GPS.html">Location</a></li>
+            <li><button id="generate-pdf">Generate PDF</button></li>
+        </ul>
+    </nav>
+
+    <!-- Section with Image and Text -->
+    <section class="hero-section">
+        <div class="image-container">
+            <img src="car%20repair.jfif" alt="OBD2 Image" class="obd2-image">
+        </div>
+        <div class="text-container">
+            <h2>Welcome to our website</h2>
+            <p class="obd2-text">Diagnosing your cars, treating them early, and knowing the different car readings, whether you are in any place, has now become easier using our site.
+                Just start your journey with us.</p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        &copy; 2024 OBD2 Website. All rights reserved.
+    </footer>
+
+    <!-- Firebase and JavaScript for dynamic navigation and PDF generation -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
+    <script>
+        // Your web app's Firebase configuration
+        var firebaseConfig = {
+            apiKey: "AIzaSyCzPMURR0NVfjP2ge9Nao1d0q_a-7PCkQo",
+            authDomain: "car-dashboard-234ad.firebaseapp.com",
+            projectId: "car-dashboard-234ad",
+            storageBucket: "car-dashboard-234ad.appspot.com",
+            messagingSenderId: "993885057582",
+            appId: "1:993885057582:web:573d22b3866983212165bf",
+            measurementId: "G-PXDK8LMVQ3"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Get a reference to the database
+        var database = firebase.database();
+
+        // Function to fetch data from Firebase
+        function fetchDataFromFirebase() {
+            return new Promise((resolve, reject) => {
+                var carReadingsRef = database.ref('carReadings');
+                var gpsRef = database.ref('GPS');
+
+                Promise.all([carReadingsRef.once('value'), gpsRef.once('value')])
+                    .then(snapshots => {
+                        var carReadingsData = snapshots[0].val();
+                        var gpsData = snapshots[1].val();
+                        resolve({ carReadings: carReadingsData, GPS: gpsData });
+                    })
+                    .catch(error => {
+                        reject(error);
+                    });
+            });
+        }
+
+        // Function to generate PDF
+        function generatePDF(data) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Add Title
+            doc.setFontSize(22);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(40, 40, 40);
+            doc.text("Car Readings Report", 10, 20);
+
+            // Add Car Readings Header
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(0, 0, 255);
+            doc.text("Car Readings:", 10, 40);
+
+            // Add Car Readings Data
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(0, 0, 0);
+            let yOffset = 50;
+            for (const [key, value] of Object.entries(data.carReadings)) {
+                doc.text(`${key}: ${value}`, 10, yOffset);
+                yOffset += 10;
+            }
+
+            // Add GPS Header
+            yOffset += 10;
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(0, 0, 255);
+            doc.text("GPS Data:", 10, yOffset);
+
+            // Add GPS Data
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(0, 0, 0);
+            yOffset += 10;
+            for (const [key, value] of Object.entries(data.GPS)) {
+                doc.text(`${key}: ${value}`, 10, yOffset);
+                yOffset += 10;
+            }
+
+            // Add Ending Sentence
+            yOffset += 20;
+            doc.setFontSize(14);
+            doc.setFont("helvetica", "italic");
+            doc.setTextColor(0, 100, 0);
+            doc.text("Thanks for using our website!", 10, yOffset);
+
+            doc.save("car_readings_report.pdf");
+        }
+
+        // Event listener for the generate PDF button
+        document.getElementById('generate-pdf').addEventListener('click', () => {
+            fetchDataFromFirebase()
+                .then(data => {
+                    generatePDF(data);
+                })
+                .catch(error => {
+                    console.error("Error fetching data from Firebase:", error);
+                });
+        });
+
+        // Function to reset all flags to 0 and navigate to the specified URL
+        function resetAllFlagsAndNavigate(url) {
+            var flagsRef = firebase.database().ref('flags');
+            var flags = {
+                RPM: 0,
+                battery: 0,
+                fuel: 0,
+                speed: 0,
+                temperature: 0
+            };
+            flagsRef.set(flags)
+                .then(function() {
+                    // Flags reset successfully, navigate to the specified page
+                    window.location.href = url;
+                })
+                .catch(function(error) {
+                    console.error('Error resetting flags:', error);
+                });
+        }
+
+        // Function to update a specific flag and reset others
+        function updateFlag(flagName, value) {
+            var flagsRef = firebase.database().ref('flags');
+            var flags = {
+                RPM: 0,
+                battery: 0,
+                fuel: 0,
+                speed: 0,
+                temperature: 0
+            };
+            flags[flagName] = value;
+            flagsRef.set(flags)
+                .then(function() {
+                    // Flag updated successfully, navigate to the appropriate page
+                    window.location.href = flagName.toLowerCase() + '.html';
+                })
+                .catch(function(error) {
+                    console.error('Error updating flag:', error);
+                });
+        }
+
+        // Add click event listeners to dropdown items
+        document.querySelector('a[href="speed.html"]').addEventListener('click', function(event) {
+            event.preventDefault();
+            updateFlag('speed', 1);
+        });
+
+        document.querySelector('a[href="rpm.html"]').addEventListener('click', function(event) {
+            event.preventDefault();
+            updateFlag('RPM', 1);
+        });
+
+        document.querySelector('a[href="Fuel.html"]').addEventListener('click', function(event) {
+            event.preventDefault();
+            updateFlag('fuel', 1);
+        });
+
+        document.querySelector('a[href="temperature.html"]').addEventListener('click', function(event) {
+            event.preventDefault();
+            updateFlag('temperature', 1);
+        });
+
+        document.querySelector('a[href="battery.html"]').addEventListener('click', function(event) {
+            event.preventDefault();
+            updateFlag('battery', 1);
+        });
+
+        // Add click event listeners to navigation items
+        document.querySelector('a[href="dtc.html"]').addEventListener('click', function(event) {
+            event.preventDefault();
+            resetAllFlagsAndNavigate('dtc.html');
+        });
+
+        document.querySelector('a[href="GPS.html"]').addEventListener('click', function(event) {
+            event.preventDefault();
+            resetAllFlagsAndNavigate('GPS.html');
+        });
+    </script>
+</body>
+</html>
